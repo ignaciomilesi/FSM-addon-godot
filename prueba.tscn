@@ -1,0 +1,156 @@
+[gd_scene load_steps=18 format=3 uid="uid://4h861rp65rgd"]
+
+[ext_resource type="Script" path="res://addons/FSM/src/AnimationPlayer.gd" id="1_r4t8h"]
+
+[sub_resource type="Animation" id="Animation_2b1uy"]
+resource_name = "dasw"
+
+[sub_resource type="Animation" id="Animation_3hs5r"]
+resource_name = "otra"
+
+[sub_resource type="Animation" id="Animation_ifjl0"]
+resource_name = "rri"
+
+[sub_resource type="Animation" id="Animation_g17jx"]
+resource_name = "tarta"
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_e6rvd"]
+_data = {
+"dasw": SubResource("Animation_2b1uy"),
+"otra": SubResource("Animation_3hs5r"),
+"rri": SubResource("Animation_ifjl0"),
+"tarta": SubResource("Animation_g17jx")
+}
+
+[sub_resource type="GDScript" id="GDScript_bnono"]
+resource_name = "tarta"
+script/source = "extends State
+
+
+func revisar():
+	if player.position.x == 100:
+		cambiarEstado.emit(\"dasw\")
+"
+
+[sub_resource type="GDScript" id="GDScript_o8l3s"]
+resource_name = "rri"
+script/source = "extends State
+
+func revisar():
+	if player.velocity.x < 0:
+		cambiarEstado.emit(\"tarta\")
+"
+
+[sub_resource type="GDScript" id="GDScript_u8ytp"]
+resource_name = "dasw"
+script/source = "extends State
+
+func revisar():
+	if player.velocity.x < 0:
+		cambiarEstado.emit(\"tarta\")
+
+	if player.velocity.x < 0:
+		cambiarEstado.emit(\"rri\")
+"
+
+[sub_resource type="GDScript" id="GDScript_pujb6"]
+resource_name = "otra"
+script/source = "extends State
+
+func revisar():
+	pass
+"
+
+[sub_resource type="Animation" id="Animation_tv1n7"]
+resource_name = "casa"
+
+[sub_resource type="Animation" id="Animation_jt70f"]
+resource_name = "falta"
+
+[sub_resource type="Animation" id="Animation_i5qmo"]
+resource_name = "tramo"
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_obrog"]
+_data = {
+"casa": SubResource("Animation_tv1n7"),
+"falta": SubResource("Animation_jt70f"),
+"tramo": SubResource("Animation_i5qmo")
+}
+
+[sub_resource type="GDScript" id="GDScript_46sji"]
+resource_name = "falta"
+script/source = "extends State
+
+func revisar():
+	if player.velocity.x < 0:
+		cambiarEstado.emit(\"casa\")
+
+	if player.velocity.x < 0:
+		cambiarEstado.emit(\"tramo\")
+"
+
+[sub_resource type="GDScript" id="GDScript_a11wd"]
+resource_name = "casa"
+script/source = "extends State
+
+func revisar():
+	if player.velocity.x < 0:
+		cambiarEstado.emit(\"tramo\")
+"
+
+[sub_resource type="GDScript" id="GDScript_r8mt7"]
+resource_name = "tramo"
+script/source = "extends State
+
+func revisar():
+	if player.velocity.x < 0:
+		cambiarEstado.emit(\"falta\")
+"
+
+[node name="Prueba" type="CharacterBody2D"]
+
+[node name="FSM" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_e6rvd")
+}
+script = ExtResource("1_r4t8h")
+
+[node name="tarta" type="Node" parent="FSM"]
+script = SubResource("GDScript_bnono")
+posicionVisor = Vector2(280, 220)
+metadata/nodo_estado = Vector2(55, 42)
+
+[node name="rri" type="Node" parent="FSM"]
+script = SubResource("GDScript_o8l3s")
+posicionVisor = Vector2(360, 400)
+metadata/nodo_estado = Vector2(55, 42)
+
+[node name="dasw" type="Node" parent="FSM"]
+script = SubResource("GDScript_u8ytp")
+posicionVisor = Vector2(740, 280)
+metadata/nodo_estado = Vector2(55, 42)
+
+[node name="otra" type="Node" parent="FSM"]
+script = SubResource("GDScript_pujb6")
+posicionVisor = Vector2(640, 180)
+
+[node name="FSM2" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_obrog")
+}
+script = ExtResource("1_r4t8h")
+
+[node name="falta" type="Node" parent="FSM2"]
+script = SubResource("GDScript_46sji")
+posicionVisor = Vector2(620, 220)
+metadata/nodo_estado = Vector2(55, 42)
+
+[node name="casa" type="Node" parent="FSM2"]
+script = SubResource("GDScript_a11wd")
+posicionVisor = Vector2(380, 380)
+metadata/nodo_estado = Vector2(55, 42)
+
+[node name="tramo" type="Node" parent="FSM2"]
+script = SubResource("GDScript_r8mt7")
+posicionVisor = Vector2(320, 160)
+metadata/nodo_estado = Vector2(55, 42)
