@@ -125,3 +125,21 @@ func modificarEstados():
 		script.reload() 
 		nodosEstados[0].set_script(script)
 		return
+
+func conectoresPorAnimaciones():
+	var listaConectores = []
+	var animaciones = get_animation_list()
+	for nombreAnimacion in animaciones:
+		
+		var animacion : Animation = get_animation(nombreAnimacion)
+		var track_idx = animacion.find_track(name + ":",Animation.TYPE_METHOD)
+		# verifijo que haya pista, y que la misma llame al metodo cambiarEstado
+		if (track_idx != -1 
+		and animacion.method_track_get_name(track_idx,0) == "cambiarEstado") :
+			listaConectores.append([
+				nombreAnimacion, # en donde estoy
+				animacion.method_track_get_params(track_idx,0)[0], # a donde voy
+				animacion.track_get_key_time(track_idx,0) # condicion de salida (tiempo)
+			])
+	return listaConectores
+

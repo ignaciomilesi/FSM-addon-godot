@@ -36,7 +36,9 @@ func agregarEstados(listaEstados):
 		nuevoEstado.set_meta("nodo_estado", estado)
 		$GraphEdit.add_child(nuevoEstado)
 
-func agregarConector(EstadoInicio : String, EstadoFin : String, Condicion : String):
+func agregarConector(EstadoInicio : String, EstadoFin : String,
+Condicion : String, tipo :String = ""):
+	
 	var nuevoConector = conectorBase.instantiate()
 	
 	if ($GraphEdit.get_node(EstadoInicio) == null or
@@ -46,6 +48,7 @@ func agregarConector(EstadoInicio : String, EstadoFin : String, Condicion : Stri
 	nuevoConector.EstadoInicio = $GraphEdit.get_node(EstadoInicio)
 	nuevoConector.EstadoFin = $GraphEdit.get_node(EstadoFin)
 	
+	nuevoConector.set_tipo_conector(tipo)
 	nuevoConector.set_label_condicion(Condicion)
 	
 	$GraphEdit.add_child(nuevoConector)

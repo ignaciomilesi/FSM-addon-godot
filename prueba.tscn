@@ -1,156 +1,116 @@
-[gd_scene load_steps=18 format=3 uid="uid://4h861rp65rgd"]
+[gd_scene load_steps=11 format=3 uid="uid://4h861rp65rgd"]
 
-[ext_resource type="Script" path="res://addons/FSM/src/AnimationPlayer.gd" id="1_r4t8h"]
+[ext_resource type="Script" path="res://addons/FSM/src/AnimationPlayer.gd" id="1_fcfjh"]
 
-[sub_resource type="Animation" id="Animation_2b1uy"]
-resource_name = "dasw"
+[sub_resource type="Animation" id="Animation_6shcv"]
+resource_name = "DASH"
 
-[sub_resource type="Animation" id="Animation_3hs5r"]
-resource_name = "otra"
-
-[sub_resource type="Animation" id="Animation_ifjl0"]
-resource_name = "rri"
-
-[sub_resource type="Animation" id="Animation_g17jx"]
-resource_name = "tarta"
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_e6rvd"]
-_data = {
-"dasw": SubResource("Animation_2b1uy"),
-"otra": SubResource("Animation_3hs5r"),
-"rri": SubResource("Animation_ifjl0"),
-"tarta": SubResource("Animation_g17jx")
+[sub_resource type="Animation" id="Animation_qww5j"]
+resource_name = "IDLE"
+tracks/0/type = "method"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("FSM")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(1),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [&"SEARCH"],
+"method": &"cambiarEstado"
+}]
 }
 
-[sub_resource type="GDScript" id="GDScript_bnono"]
-resource_name = "tarta"
-script/source = "extends State
+[sub_resource type="Animation" id="Animation_kys03"]
+resource_name = "PUSH"
 
+[sub_resource type="Animation" id="Animation_54xrx"]
+resource_name = "SEARCH"
 
-func revisar():
-	if player.position.x == 100:
-		cambiarEstado.emit(\"dasw\")
-"
-
-[sub_resource type="GDScript" id="GDScript_o8l3s"]
-resource_name = "rri"
-script/source = "extends State
-
-func revisar():
-	if player.velocity.x < 0:
-		cambiarEstado.emit(\"tarta\")
-"
-
-[sub_resource type="GDScript" id="GDScript_u8ytp"]
-resource_name = "dasw"
-script/source = "extends State
-
-func revisar():
-	if player.velocity.x < 0:
-		cambiarEstado.emit(\"tarta\")
-
-	if player.velocity.x < 0:
-		cambiarEstado.emit(\"rri\")
-"
-
-[sub_resource type="GDScript" id="GDScript_pujb6"]
-resource_name = "otra"
-script/source = "extends State
-
-func revisar():
-	pass
-"
-
-[sub_resource type="Animation" id="Animation_tv1n7"]
-resource_name = "casa"
-
-[sub_resource type="Animation" id="Animation_jt70f"]
-resource_name = "falta"
-
-[sub_resource type="Animation" id="Animation_i5qmo"]
-resource_name = "tramo"
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_obrog"]
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_veusd"]
 _data = {
-"casa": SubResource("Animation_tv1n7"),
-"falta": SubResource("Animation_jt70f"),
-"tramo": SubResource("Animation_i5qmo")
+"DASH": SubResource("Animation_6shcv"),
+"IDLE": SubResource("Animation_qww5j"),
+"PUSH": SubResource("Animation_kys03"),
+"SEARCH": SubResource("Animation_54xrx")
 }
 
-[sub_resource type="GDScript" id="GDScript_46sji"]
-resource_name = "falta"
+[sub_resource type="GDScript" id="GDScript_khj3y"]
+resource_name = "IDLE"
 script/source = "extends State
 
-func revisar():
-	if player.velocity.x < 0:
-		cambiarEstado.emit(\"casa\")
-
-	if player.velocity.x < 0:
-		cambiarEstado.emit(\"tramo\")
+func entrar() -> void:
+	player.velocity = Vector2(0,0)
 "
 
-[sub_resource type="GDScript" id="GDScript_a11wd"]
-resource_name = "casa"
+[sub_resource type="GDScript" id="GDScript_6gqug"]
+resource_name = "SEARCH"
 script/source = "extends State
 
-func revisar():
-	if player.velocity.x < 0:
-		cambiarEstado.emit(\"tramo\")
+func entrar() -> void:
+	player.velocity = Vector2(0,0)
+
+func revisar() -> void:
+	if player.get_node(\"SEE\").is_colliding() :
+		cambiarEstado.emit(\"DASH\")
+
+func ejecutar() -> void:
+	player.rotate(0.05)
 "
 
-[sub_resource type="GDScript" id="GDScript_r8mt7"]
-resource_name = "tramo"
+[sub_resource type="GDScript" id="GDScript_2d8ru"]
+resource_name = "DASH"
 script/source = "extends State
 
-func revisar():
-	if player.velocity.x < 0:
-		cambiarEstado.emit(\"falta\")
+func entrar() -> void:
+	player.velocity = Vector2.RIGHT.rotated(player.rotation) * player.VEL_MOVIMIENTO
+
+func revisar() -> void:
+	if player.is_on_wall():
+		cambiarEstado.emit(\"IDLE\")
+
+# cuando pego contra el pj
+func _on_area_2d_body_entered(body):
+	body.empujar(player.velocity.normalized() * 1000)
+	body.dañar(1)
+		
+	player.velocity = player.velocity.normalized() * -1000
+	cambiarEstado.emit(\"PUSH\")
+"
+
+[sub_resource type="GDScript" id="GDScript_8f2b1"]
+resource_name = "PUSH"
+script/source = "extends State
+
+func revisar() -> void:
+	if player.velocity.length() < 100:
+		cambiarEstado.emit(\"IDLE\")
+
+func ejecutar() -> void:
+	player.velocity = player.velocity.lerp(Vector2.ZERO, 0.2)
 "
 
 [node name="Prueba" type="CharacterBody2D"]
 
 [node name="FSM" type="AnimationPlayer" parent="."]
 libraries = {
-"": SubResource("AnimationLibrary_e6rvd")
+"": SubResource("AnimationLibrary_veusd")
 }
-script = ExtResource("1_r4t8h")
+script = ExtResource("1_fcfjh")
 
-[node name="tarta" type="Node" parent="FSM"]
-script = SubResource("GDScript_bnono")
-posicionVisor = Vector2(280, 220)
-metadata/nodo_estado = Vector2(55, 42)
+[node name="IDLE" type="Node" parent="FSM"]
+script = SubResource("GDScript_khj3y")
+posicionVisor = Vector2(200, 160)
 
-[node name="rri" type="Node" parent="FSM"]
-script = SubResource("GDScript_o8l3s")
-posicionVisor = Vector2(360, 400)
-metadata/nodo_estado = Vector2(55, 42)
+[node name="SEARCH" type="Node" parent="FSM"]
+script = SubResource("GDScript_6gqug")
+posicionVisor = Vector2(540, 160)
 
-[node name="dasw" type="Node" parent="FSM"]
-script = SubResource("GDScript_u8ytp")
-posicionVisor = Vector2(740, 280)
-metadata/nodo_estado = Vector2(55, 42)
+[node name="DASH" type="Node" parent="FSM"]
+script = SubResource("GDScript_2d8ru")
+posicionVisor = Vector2(560, 460)
 
-[node name="otra" type="Node" parent="FSM"]
-script = SubResource("GDScript_pujb6")
-posicionVisor = Vector2(640, 180)
-
-[node name="FSM2" type="AnimationPlayer" parent="."]
-libraries = {
-"": SubResource("AnimationLibrary_obrog")
-}
-script = ExtResource("1_r4t8h")
-
-[node name="falta" type="Node" parent="FSM2"]
-script = SubResource("GDScript_46sji")
-posicionVisor = Vector2(620, 220)
-metadata/nodo_estado = Vector2(55, 42)
-
-[node name="casa" type="Node" parent="FSM2"]
-script = SubResource("GDScript_a11wd")
-posicionVisor = Vector2(380, 380)
-metadata/nodo_estado = Vector2(55, 42)
-
-[node name="tramo" type="Node" parent="FSM2"]
-script = SubResource("GDScript_r8mt7")
-posicionVisor = Vector2(320, 160)
-metadata/nodo_estado = Vector2(55, 42)
+[node name="PUSH" type="Node" parent="FSM"]
+script = SubResource("GDScript_8f2b1")
+posicionVisor = Vector2(200, 460)
