@@ -5,7 +5,8 @@ var conectorBase =  preload("../escenas/Conector.tscn")
 
 # creamos un visor limpio para agregar  los estados
 func recargar():
-	if get_node("GraphEdit") != null:
+	# reviso y eliminino el visor viejo
+	if has_node("GraphEdit"):
 		var visor = $GraphEdit
 		remove_child(visor)
 	
@@ -41,8 +42,8 @@ Condicion : String, tipo :String = ""):
 	
 	var nuevoConector = conectorBase.instantiate()
 	
-	if ($GraphEdit.get_node(EstadoInicio) == null or
-	 $GraphEdit.get_node(EstadoFin) == null):
+	if (not $GraphEdit.has_node(EstadoInicio) or
+	not $GraphEdit.has_node(EstadoFin)):
 		printerr("No exite el estado " + EstadoInicio + " o " + EstadoFin)
 
 	nuevoConector.EstadoInicio = $GraphEdit.get_node(EstadoInicio)
