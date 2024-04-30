@@ -11,9 +11,27 @@ var states: Dictionary = {}
 
 func _ready():
 	if Engine.is_editor_hint():
-		animation_list_changed.connect(modificarEstados)
+		
+		# si no esta creada la libreria, la creo (esto es cuando creo el nodo,
+		# la libreria de animaciones no se crea hasta crear una animacion, por lo que 
+		#  tiraba error
+		if not has_animation_library(""):
+			add_animation_library("", AnimationLibrary.new())
+
+		var libreriaAnimaciones = get_animation_library("")
+		
+		# conecto la libreria con las funciones que modificaran los nodos Stados
+		libreriaAnimaciones.animation_added.connect(agregar_estado)
+		libreriaAnimaciones.animation_removed.connect(eliminar_estado)
+		libreriaAnimaciones.animation_renamed.connect(renombrar_estado)
+		
+		# para mostrar scrip cuando modifico las animaciones
+		libreriaAnimaciones.animation_changed.connect(mostrarScript)
+		# animation_list_changed.connect(modificarEstados)
 		return
 		
+	# esto es para el funcionamiento del FSM ingame, ago la coneccion de los estados
+	# para poder usar la funcion de cambio y seteo el estado de inicio 
 	for child in get_children():
 		if child is State:
 			child.cambiarEstado.connect(cambiarEstado)
@@ -50,83 +68,49 @@ func cambiarEstado(new_state_name: StringName) -> void:
 	else:
 		push_warning("El estado no existe o es el que ya se encuentra")
 
-# Maneja la generacion o eliminacion de nodos al crear o eliminar animaciones
-func modificarEstados():
-	if not Engine.is_editor_hint(): return
+
+#################################################
+# Funciones para la creacion del FSM y su visor #
+#################################################
+
+# Crea el Nodo Estado (State) cuando se crea una animacion 
+func agregar_estado(animacion : StringName) -> void:
+	# salteo el RESET
+	if (animacion == "RESET"):
+		return
 	
-	var animaciones = get_animation_list()
-	var nodosEstados = get_children()
+	var nuevoNodo = Node.new()
+	nuevoNodo.name =  animacion
+	# le cargo el scrip para el FSM
+	var script = GDScript.new()
+	script.source_code = "extends State"
+	script.resource_name = animacion
+	script.reload() 
+	nuevoNodo.set_script(script)
+	# agrego el nodo y le seteo el owner para que aparesca
+	add_child(nuevoNodo)
+	nuevoNodo.set_owner(get_tree().get_edited_scene_root())
 
-	# se agrego una animacion
-	if animaciones.size() > nodosEstados.size():
-		for animacion in animaciones:
-			var estadoNoExiste = true
-			
-			#reviso que ya no exista el nodo
-			for estado in nodosEstados:
-				if animacion == estado.name:
-					estadoNoExiste = false
-					break
-					
-			if estadoNoExiste:
-				# creo el nodo y le coloco el nombre
-				var nuevoNodo = Node.new()
-				nuevoNodo.name =  animacion
-				# le cargo el scrip para el FSM
-				var script = GDScript.new()
-				script.source_code = "extends State"
-				script.resource_name = animacion
-				script.reload() 
-				nuevoNodo.set_script(script)
-				# agrego el nodo y le seteo el owner para que aparesca
-				add_child(nuevoNodo)
-				nuevoNodo.set_owner(get_tree().get_edited_scene_root())
-		return
-		
-	# se elimino una animacion
-	elif animaciones.size() < nodosEstados.size():
-		
-		for estado in nodosEstados:
-			
-			if not(estado is State):
-				continue
-				
-			var animacionNoExiste = true
-			for animacion in animaciones:
-			
-			#reviso que ya no exista el nodo
-				if estado.name == animacion:
-					animacionNoExiste = false
-					break
-			
-			if animacionNoExiste:
-				remove_child(estado)
-		return
-		
-		
-	# cambio el nombre una animacion
-	elif animaciones.size() == nodosEstados.size():
+# Elimino el Nodo Estado (State) cuando se elimina una animacion
+func eliminar_estado(animacion : StringName) -> void:
+	
+	remove_child(get_node(str(animacion)))
 
-		for i in range(nodosEstados.size()-1,-1,-1):
-			if not(nodosEstados[i] is State):
-				nodosEstados.pop_at(i)
-				continue
-				
-			for j in range(animaciones.size()-1,-1,-1):
-			
-				if nodosEstados[i].name == animaciones[j]:
-					nodosEstados.pop_at(i)
-					animaciones.remove_at(j)
-					break
-		nodosEstados[0].name = animaciones[0]
-		# actualizo el nombre del script
-		var script = nodosEstados[0].get_script()
-		script.resource_name = animaciones[0]
-		script.reload() 
-		nodosEstados[0].set_script(script)
-		return
+# cambio el nombre del Nodo Estado (State) cuando se cambia el nombre de una animacion
+func renombrar_estado(nombreAnimacion: StringName, 
+nuevoNombreAnimacion: StringName) -> void:
+	
+	var nodoEstado = get_node(str(nombreAnimacion))
+	nodoEstado.name = nuevoNombreAnimacion
+	# actualizo el nombre del script
+	var script = nodoEstado.get_script()
+	script.resource_name = nuevoNombreAnimacion
+	script.reload() 
+	nodoEstado.set_script(script)
 
-func conectoresPorAnimaciones():
+# pasa los conectores que sean por animacion
+func conectoresPorAnimaciones()-> Array:
+	
 	var listaConectores = []
 	var animaciones = get_animation_list()
 	for nombreAnimacion in animaciones:
@@ -143,3 +127,12 @@ func conectoresPorAnimaciones():
 			])
 	return listaConectores
 
+# para que seleccione y muestre automaticamente el scrip del estado que modifico
+func mostrarScript(animacion : StringName) -> void:
+	
+	# salteando el reset
+	if str(animacion) == "RESET":
+		return
+	
+	var scriptEstado : Script = get_node(str(animacion)).get_script()
+	EditorInterface.edit_script(scriptEstado)

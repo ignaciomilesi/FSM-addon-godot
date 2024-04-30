@@ -13,6 +13,10 @@ func _exit_tree():
 	plugin_control.free()
 
 func _handles(object):
+	
+	if  object is State:
+		EditorInterface.edit_script(object.get_script())
+	
 	if object is FSM and FSMseleccionado == null:
 		_generarArbol(object)
 		FSMseleccionado = object

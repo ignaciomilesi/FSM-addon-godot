@@ -14,10 +14,10 @@ Al crear animaciones se generaran los estados (nodos hijos al FSM). Los estados 
 
 Adicionalmente poseen la señal `cambiarEstado` que permite el cambio de estado. Por ejemplo, si estoy en el estado `RUN` y en revisar tengo `cambiarEstado.emit("IDLE")` ocurrirá lo siguiente:
 
-    1- No se ejecutara el ejecutar del RUN
-    2- Se ejecutara el salir del RUN
-    3- Se ejecutara el entrar de IDLE
-    4- Quedara activo el el estado IDLE
+	1- No se ejecutara el ejecutar del RUN
+	2- Se ejecutara el salir del RUN
+	3- Se ejecutara el entrar de IDLE
+	4- Quedara activo el el estado IDLE
 
 Los estados poseen la variable `player` en donde se encuentra el objete que debe controlar el FSM
 
@@ -27,12 +27,12 @@ Adicionalmente, se cuenta con un visor de diagrama de FSM, aparecerá abajo (al 
 
 Arriba a la izquierda, aparecerá una lista con las conexiones con la forma:
 
-    estado inicial --> estado final : condición de cambio
+	estado inicial --> estado final : condición de cambio
 
 Las flechas representan:
 
-    --> : cambio indicado en revisar del estado
-    -A-> : cambio indicado en la animación
-    -S-> : cambio indicado por señal
+	--> : cambio indicado en revisar del estado
+	-A-> : cambio indicado en la animación
+	-S-> : cambio indicado por señal
 
 En la primer visualización los estados aparecerán desordenados, para las siguientes visualizaciones, los mismos aparecerán en la ultima posición que se hayan dejado
