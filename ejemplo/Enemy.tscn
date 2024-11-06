@@ -1,7 +1,8 @@
-[gd_scene load_steps=15 format=3 uid="uid://4h861rp65rgd"]
+[gd_scene load_steps=18 format=3 uid="uid://4h861rp65rgd"]
 
 [ext_resource type="Texture2D" uid="uid://wb47wle7o485" path="res://assets/D.png" id="1_tovkj"]
 [ext_resource type="Script" path="res://addons/FSM/src/FSM.gd" id="2_esybj"]
+[ext_resource type="Script" path="res://addons/FSM/src/Ciclo.gd" id="3_efjhf"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_nxvrc"]
 radius = 25.0
@@ -24,7 +25,7 @@ tracks/0/keys = {
 tracks/1/type = "method"
 tracks/1/imported = false
 tracks/1/enabled = true
-tracks/1/path = NodePath("FSM/DASH")
+tracks/1/path = NodePath("FSM/Movimiento/DASH")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
@@ -41,7 +42,7 @@ resource_name = "IDLE"
 tracks/0/type = "method"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("FSM")
+tracks/0/path = NodePath("FSM/Movimiento")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -83,12 +84,22 @@ _data = {
 "SEARCH": SubResource("Animation_gjlbe")
 }
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_fo7gv"]
+radius = 25.0
+
 [sub_resource type="GDScript" id="GDScript_g0thf"]
 resource_name = "IDLE"
 script/source = "extends State
 
 func entrar() -> void:
 	player.velocity = Vector2(0,0)
+	animaciones.play(\"IDLE\")
+
+func revisar() -> void:
+	pass
+	# devido a que el cambio de animacion se realiza en el AnimationPlayer
+	# lo indico como comentario para que se muestre en el visor
+	# if -A- tiempoAnimacion: cambiarEstado.emit(\"SEARCH\")
 "
 
 [sub_resource type="GDScript" id="GDScript_mf5cc"]
@@ -97,6 +108,7 @@ script/source = "extends State
 
 func entrar() -> void:
 	player.velocity = Vector2(0,0)
+	animaciones.play(\"SEARCH\")
 
 func revisar() -> void:
 	if player.get_node(\"SEE\").is_colliding() :
@@ -109,6 +121,9 @@ func ejecutar() -> void:
 [sub_resource type="GDScript" id="GDScript_0o5ty"]
 resource_name = "DASH"
 script/source = "extends State
+
+func entrar() -> void:
+	animaciones.play(\"DASH\")
 
 func revisar() -> void:
 	if player.is_on_wall():
@@ -130,6 +145,9 @@ func _on_area_2d_body_entered(body):
 resource_name = "PUSH"
 script/source = "extends State
 
+func entrar() -> void:
+	animaciones.play(\"PUSH\")
+	
 func revisar() -> void:
 	if player.velocity.length() < 100:
 		cambiarEstado.emit(\"IDLE\")
@@ -138,8 +156,31 @@ func ejecutar() -> void:
 	player.velocity = player.velocity.lerp(Vector2.ZERO, 0.2)
 "
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_fo7gv"]
-radius = 25.0
+[sub_resource type="GDScript" id="GDScript_bcmf2"]
+resource_name = "Rojo"
+script/source = "extends State
+
+func entrar() -> void:
+	player.modulate = Color(\"Red\")
+
+func revisar() -> void:
+	
+	if player.rotation > PI:
+		cambiarEstado.emit(\"Azul\")
+"
+
+[sub_resource type="GDScript" id="GDScript_yaalq"]
+resource_name = "Azul"
+script/source = "extends State
+
+func entrar() -> void:
+	player.modulate = Color(\"Blue\")
+
+func revisar() -> void:
+	
+	if player.rotation > 0:
+		cambiarEstado.emit(\"Rojo\")
+"
 
 [node name="Enemy" type="CharacterBody2D"]
 collision_layer = 2
@@ -152,28 +193,10 @@ texture = ExtResource("1_tovkj")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_nxvrc")
 
-[node name="FSM" type="AnimationPlayer" parent="." node_paths=PackedStringArray("current_state")]
+[node name="animacion" type="AnimationPlayer" parent="."]
 libraries = {
 "": SubResource("AnimationLibrary_7pxcn")
 }
-script = ExtResource("2_esybj")
-current_state = NodePath("IDLE")
-
-[node name="IDLE" type="Node" parent="FSM"]
-script = SubResource("GDScript_g0thf")
-posicionVisor = Vector2(220, 120)
-
-[node name="SEARCH" type="Node" parent="FSM"]
-script = SubResource("GDScript_mf5cc")
-posicionVisor = Vector2(580, 120)
-
-[node name="DASH" type="Node" parent="FSM"]
-script = SubResource("GDScript_0o5ty")
-posicionVisor = Vector2(580, 400)
-
-[node name="PUSH" type="Node" parent="FSM"]
-script = SubResource("GDScript_0jkvw")
-posicionVisor = Vector2(220, 400)
 
 [node name="Area2D" type="Area2D" parent="."]
 collision_layer = 2
@@ -184,4 +207,32 @@ shape = SubResource("CircleShape2D_fo7gv")
 [node name="SEE" type="RayCast2D" parent="."]
 target_position = Vector2(700, 0)
 
-[connection signal="body_entered" from="Area2D" to="FSM/DASH" method="_on_area_2d_body_entered"]
+[node name="FSM" type="Node" parent="."]
+script = ExtResource("2_esybj")
+
+[node name="Movimiento" type="Node" parent="FSM" node_paths=PackedStringArray("current_state", "animaciones")]
+script = ExtResource("3_efjhf")
+current_state = NodePath("IDLE")
+animaciones = NodePath("../../animacion")
+
+[node name="IDLE" type="Node" parent="FSM/Movimiento"]
+script = SubResource("GDScript_g0thf")
+
+[node name="SEARCH" type="Node" parent="FSM/Movimiento"]
+script = SubResource("GDScript_mf5cc")
+
+[node name="DASH" type="Node" parent="FSM/Movimiento"]
+script = SubResource("GDScript_0o5ty")
+
+[node name="PUSH" type="Node" parent="FSM/Movimiento"]
+script = SubResource("GDScript_0jkvw")
+
+[node name="Color" type="Node" parent="FSM" node_paths=PackedStringArray("current_state")]
+script = ExtResource("3_efjhf")
+current_state = NodePath("Rojo")
+
+[node name="Rojo" type="Node" parent="FSM/Color"]
+script = SubResource("GDScript_bcmf2")
+
+[node name="Azul" type="Node" parent="FSM/Color"]
+script = SubResource("GDScript_yaalq")

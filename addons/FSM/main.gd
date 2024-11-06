@@ -2,7 +2,7 @@
 extends EditorPlugin
 
 var plugin_control
-var FSMseleccionado = null
+var Cicloseleccionado = null
 
 func _enter_tree():
 	plugin_control = preload("./src/visor.gd").new()
@@ -17,29 +17,29 @@ func _handles(object):
 	if  object is State:
 		EditorInterface.edit_script(object.get_script())
 	
-	if object is FSM and FSMseleccionado == null:
+	if object is Ciclo and Cicloseleccionado == null:
 		_generarArbol(object)
-		FSMseleccionado = object
+		Cicloseleccionado = object
 		add_control_to_bottom_panel(plugin_control,"Visor de FSM")
 		
-	elif object is FSM and FSMseleccionado != object:
+	elif object is Ciclo and Cicloseleccionado != object:
 		plugin_control.guardarPosiciones()
 		_generarArbol(object)
-		FSMseleccionado = object
+		Cicloseleccionado = object
 		
-	elif not object is FSM and FSMseleccionado != null: 
+	elif not object is Ciclo and Cicloseleccionado != null: 
 		plugin_control.guardarPosiciones()
 		remove_control_from_bottom_panel(plugin_control)
-		FSMseleccionado = null
+		Cicloseleccionado = null
 
-func _generarArbol(FSM):
+func _generarArbol(Ciclo):
 	# recargo para tener el diagrama limpio
 	plugin_control.recargar()
 	# cargo los estados
-	plugin_control.agregarEstados(FSM.get_children())
+	plugin_control.agregarEstados(Ciclo.get_children())
 	# cargo los conectores
 	var listaResumen = ""
-	for estados in FSM.get_children():
+	for estados in Ciclo.get_children():
 		var script : Script = estados.get_script()
 		var codigoScript : String = script.source_code.strip_escapes()
 		
@@ -72,10 +72,10 @@ func _generarArbol(FSM):
 				
 				listaResumen += estados.name + " -S-> " + salida + " : " + condicion +"\n"
 				plugin_control.agregarConector(estados.name, salida, condicion, "Señal")
-	
+	"""
 	# Agrego los conectores que salen de la animacion
 	for coneccion in FSM.conectoresPorAnimaciones():
 		listaResumen += coneccion[0] + " -A-> " + coneccion[1] + " : " + str(coneccion[2]) +"s\n"
 		plugin_control.agregarConector(coneccion[0], coneccion[1], str(coneccion[2])+"s", "Anim")
-	
+	"""
 	plugin_control.listarConecciones(listaResumen)

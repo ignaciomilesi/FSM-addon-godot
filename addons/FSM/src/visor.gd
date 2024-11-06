@@ -65,5 +65,3 @@ func guardarPosiciones():
 	for estado in $GraphEdit.get_children():
 		if estado is GraphNode:
 			estado.get_meta("nodo_estado").posicionVisor = estado.position_offset
-
-
