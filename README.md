@@ -1,3 +1,7 @@
+> [!NOTE]
+> Esta rama se conserva como respaldo para el FSM basado en un AnimationPlayer modificado. Se determinó que el FSM funciona de manera más clara si se mantiene independiente del AnimationPlayer.
+
+
 # Finite State Machine
 
 Un Finite State Machine (FSM) basado en un AnimationPlayer modificado.
