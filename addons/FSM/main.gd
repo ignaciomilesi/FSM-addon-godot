@@ -72,10 +72,5 @@ func _generarArbol(Ciclo):
 				
 				listaResumen += estados.name + " -S-> " + salida + " : " + condicion +"\n"
 				plugin_control.agregarConector(estados.name, salida, condicion, "Señal")
-	"""
-	# Agrego los conectores que salen de la animacion
-	for coneccion in FSM.conectoresPorAnimaciones():
-		listaResumen += coneccion[0] + " -A-> " + coneccion[1] + " : " + str(coneccion[2]) +"s\n"
-		plugin_control.agregarConector(coneccion[0], coneccion[1], str(coneccion[2])+"s", "Anim")
-	"""
+
 	plugin_control.listarConecciones(listaResumen)
