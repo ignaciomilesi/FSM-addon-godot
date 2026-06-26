@@ -77,35 +77,35 @@ Al igual que `STATE`, los `GRUPO` poseen la señal `cambiarEstado` para cambiar 
 
 Sera necesario asignar el `Current State`, el `STATE` o `GRUPO` que se ejecuta al iniciar el `CICLO`. También es posible asignar `animaciones`, el `AnimationPlayer` que se usara en el ciclo, este ultimo es opcional.
 
-	![image](./img/conf-ciclo.png)
+![image](./img/conf-ciclo.png)
 
 
-	Las ``LISTA_NOMBRE_ANIMACIONES`` y ``LISTA_ESTADOS`` son diccionarios con, respectivamente, los nombres de las animaciones y `STATE` o `GRUPO`. Son usados para comenzar las animaciones o emitir el cambio de `STATE`. Son solo de referencia y no deben modificarse manualmente, se actualizan al modificar los `STATE` o las animaciones
-	
-	![image](./img/conf-ciclo-despl.png)
-	
-	Ejemplo de uso:
+Las ``LISTA_NOMBRE_ANIMACIONES`` y ``LISTA_ESTADOS`` son diccionarios con, respectivamente, los nombres de las animaciones y `STATE` o `GRUPO`. Son usados para comenzar las animaciones o emitir el cambio de `STATE`. Son solo de referencia y no deben modificarse manualmente, se actualizan al modificar los `STATE` o las animaciones
 
-	```gdscript 
-	func entrar() -> void:
-		animaciones.play(LISTA_NOMBRE_ANIMACIONES.IDLE)
-	```
+![image](./img/conf-ciclo-despl.png)
 
-	```gdscript 
-	func revisar() -> void:
-		var direccion = Input.get_axis("left", "right")
-		if direccion:
-			cambiarEstado.emit(LISTA_ESTADOS.CORRER)
-	```
-	> [!NOTE]
-	> El cambio de estado o el inicio de animación se puede realizar usando la lista o escribiendo el nombre de la animación o STATE
+Ejemplo de uso:
+
+```gdscript 
+func entrar() -> void:
+	animaciones.play(LISTA_NOMBRE_ANIMACIONES.IDLE)
+```
+
+```gdscript 
+func revisar() -> void:
+	var direccion = Input.get_axis("left", "right")
+	if direccion:
+		cambiarEstado.emit(LISTA_ESTADOS.CORRER)
+```
+> [!NOTE]
+> El cambio de estado o el inicio de animación se puede realizar usando la lista o escribiendo el nombre de la animación o STATE
 
 
 ### `GRUPO`
 
 De la misma forma sera necesario asignar el `Current State`. También posee un ``LISTA_ESTADOS`` con los nombres de los `STATE` que lo conforman.
 
-	![image](./img/conf-grupo.png)
+![image](./img/conf-grupo.png)
 
 
  
