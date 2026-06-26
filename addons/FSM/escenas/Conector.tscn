@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://dfx0yd8i8xlh3"]
+[gd_scene format=3 uid="uid://dfx0yd8i8xlh3"]
 
 [ext_resource type="Texture2D" uid="uid://cgxvjenr7gnxe" path="res://addons/FSM/utils/ConectorSimple.png" id="1_rxlut"]
 
@@ -6,8 +6,10 @@
 script/source = "@tool
 extends Line2D
 
-@export var EstadoInicio : GraphNode
-@export var EstadoFin : GraphNode
+@export var EstadoInicio : GraphElement
+@export var EstadoFin : GraphElement
+@export var GrupoContenedor : GraphElement
+
 
 var conectorAnim = preload(\"res://addons/FSM/utils/ConectorAnim.png\")
 var conectorSeñal = preload(\"res://addons/FSM/utils/ConectorSeñal.png\")
@@ -27,28 +29,52 @@ func set_tipo_conector(tipo):
 func _process(_delta):
 	if EstadoInicio == null or EstadoFin == null:
 		return
+	
+	var centroEstadoInicio : Vector2 = EstadoInicio.position + EstadoInicio.size * EstadoInicio.scale / 2
+	var centroEstadoFin : Vector2 =  EstadoFin.position + EstadoFin.size * EstadoFin.scale /2
+	
+	var vectorCentroCentro : Vector2 = centroEstadoFin - centroEstadoInicio
+	
+	var factorBordeInicio : float = min(
+		(EstadoInicio.size.x * EstadoInicio.scale.x / 2)/abs(vectorCentroCentro.x), 
+		(EstadoInicio.size.y * EstadoInicio.scale.y / 2)/abs(vectorCentroCentro.y))-0.02
+	
+	var factorBordeFin : float = min(
+		(EstadoFin.size.x * EstadoFin.scale.x / 2)/abs(vectorCentroCentro.x), 
+		(EstadoFin.size.y * EstadoFin.scale.y / 2)/abs(vectorCentroCentro.y))-0.02
+	
+	var posicionInicialConector : Vector2 = centroEstadoInicio + vectorCentroCentro * factorBordeInicio
+	var posicionFinalConector : Vector2 = centroEstadoFin - vectorCentroCentro * factorBordeFin
+	
+	if GrupoContenedor != null:
+		posicionInicialConector *= GrupoContenedor.scale
+		posicionFinalConector *= GrupoContenedor.scale
 		
-	var posicionInicialConector : Vector2 = EstadoInicio.position + EstadoInicio.size / 2
-	var posicionFinalConector : Vector2 =  EstadoFin.position + EstadoFin.size /2
+		posicionInicialConector += GrupoContenedor.position  + Vector2(0,40) * GrupoContenedor.scale
+		posicionFinalConector += GrupoContenedor.position  + Vector2(0,40) * GrupoContenedor.scale
 	
 	set_point_position(0, posicionInicialConector)
 	set_point_position(1, posicionFinalConector)
 	
 	# Acomodo el label 
 	$Label.position = (posicionInicialConector +
-	 (posicionFinalConector - posicionInicialConector) / 2 # para que quede al medio de la linea
+	 (posicionFinalConector - posicionInicialConector) *0.3 # para que quede un poco corrido del medio de la linea
 	- $Label.size/2 #acomodo por el tamaño del label
 	- (posicionFinalConector - posicionInicialConector).normalized().rotated(PI/2)* 10)
 	# lo ultimo es porque el nodo linea posee un ancho de 24 y la linea dibujada se encuentra
 	# sobre el extremo superior, tengo que corregir para que el label quede sobre la linea dibujada
 	
+	# ajusto la escala de la etiqueta
+	$Label.scale = EstadoInicio.scale if GrupoContenedor == null else GrupoContenedor.scale
+	
+	\"\"\"
 	# giro el texto para que quede sobre la linea
 	var anguloConector = (posicionFinalConector - posicionInicialConector).angle()
 	$Label.rotation = anguloConector
 	# lo 180º si me queda de cabeza
 	if anguloConector < -PI/2 or anguloConector > PI/2:
 		$Label.rotation += PI
-		
+		\"\"\"
 
 func set_label_condicion(condicion):
 	$Label.text = condicion
@@ -57,18 +83,20 @@ func set_label_condicion(condicion):
 [sub_resource type="LabelSettings" id="LabelSettings_j2ki3"]
 font_size = 10
 
-[node name="Conector" type="Line2D"]
+[node name="Conector" type="Line2D" unique_id=109228610]
+z_index = 1
+z_as_relative = false
 points = PackedVector2Array(0, 0, 400, 0)
 width = 24.0
-default_color = Color(0.5, 1, 0.759789, 1)
+default_color = Color(0.91826487, 0.5, 1, 1)
 texture = ExtResource("1_rxlut")
 texture_mode = 2
 round_precision = 1
 script = SubResource("GDScript_pg5ax")
 metadata/_edit_lock_ = true
 
-[node name="Label" type="Label" parent="."]
-self_modulate = Color(0.5, 1, 0.759789, 1)
+[node name="Label" type="Label" parent="." unique_id=2131839981]
+self_modulate = Color(0.91826487, 0.5, 1, 1)
 clip_contents = true
 anchors_preset = 8
 anchor_left = 0.5
@@ -81,13 +109,14 @@ offset_right = 3.5
 offset_bottom = 7.0
 grow_horizontal = 2
 grow_vertical = 2
+pivot_offset = Vector2(3.5, 7)
 size_flags_horizontal = 4
 text = "A"
 label_settings = SubResource("LabelSettings_j2ki3")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ColorRect" type="ColorRect" parent="Label"]
+[node name="ColorRect" type="ColorRect" parent="Label" unique_id=97683260]
 show_behind_parent = true
 layout_mode = 1
 anchors_preset = 15

@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://dqnki1s2q7cjs"]
+
+[sub_resource type="GDScript" id="GDScript_tjtcp"]
+script/source = "@tool
+extends GraphFrame
+
+@export var tamaño = Vector2(200,100)
+
+@onready var color_marco = Color.from_hsv(randf(), 0.5, 0.6)
+
+func _ready():
+	
+#	size = tamaño
+	
+	var color =  Color(color_marco, 0.2)
+	tint_color = color
+	resizable = true
+	
+	for nodo : Node in $GraphEdit.get_children():
+		if nodo is GraphNode:
+			nodo.self_modulate = color_marco
+	
+	
+
+
+func agregar_estado(estado :Node) -> void:
+	$GraphEdit.add_child(estado)
+	
+func obtener_estados() -> Array[Node]:
+	return $GraphEdit.get_children()
+	
+func obtener_estado(nombre :String) -> Node:
+	return $GraphEdit.get_node(nombre)
+
+func verificar_existencia_estado(nombre :String) -> bool:
+	return $GraphEdit.has_node(nombre)
+"
+
+[node name="GraphFrame" type="GraphFrame" unique_id=824729027]
+z_as_relative = false
+custom_minimum_size = Vector2(200, 100)
+anchors_preset = -1
+offset_right = 200.0
+offset_bottom = 102.0
+mouse_filter = 1
+position_offset = Vector2(326, 100)
+title = "Grupo"
+autoshrink_enabled = false
+tint_color_enabled = true
+tint_color = Color(0.3, 0.32516587, 0.6, 0.2)
+script = SubResource("GDScript_tjtcp")
+"tamaño" = null
+
+[node name="GraphEdit" type="GraphEdit" parent="." unique_id=615249039]
+clip_contents = false
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+show_grid = false
+snapping_enabled = false
+minimap_enabled = false
+show_menu = false

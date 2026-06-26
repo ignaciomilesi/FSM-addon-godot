@@ -1,50 +1,372 @@
-[gd_scene load_steps=4 format=3 uid="uid://buc4x365ucrft"]
+[gd_scene format=3 uid="uid://buc4x365ucrft"]
 
-[ext_resource type="Texture2D" uid="uid://c6o5h1jcyac8u" path="res://assets/#.png" id="1_euvpk"]
+[ext_resource type="SpriteFrames" uid="uid://dbqyb713qu3ir" path="res://assets/pj/animacion-pj.tres" id="1_g1avn"]
+[ext_resource type="Script" uid="uid://bh47lvfqgose1" path="res://addons/FSM/src/FSM.gd" id="2_dnv1s"]
+[ext_resource type="Script" uid="uid://blggo3fjahvl3" path="res://addons/FSM/src/Ciclo.gd" id="3_43tq0"]
 
 [sub_resource type="GDScript" id="GDScript_7xq5x"]
 script/source = "extends CharacterBody2D
 
-
-const SPEED = 300.0
-const JUMP_VELOCITY = -400.0
-var velocidadEmpuje : Vector2 = Vector2.ZERO
-
-func _physics_process(_delta):
-	if velocidadEmpuje.length() != 0:
-		velocity = velocidadEmpuje
-		velocidadEmpuje = velocidadEmpuje.lerp(Vector2.ZERO, 0.2)
-		if velocidadEmpuje.length() < 50 : velocidadEmpuje = Vector2.ZERO
-		
-	else:
-		var directionX = Input.get_axis(\"left\", \"right\")
-		if directionX:
-			velocity.x = directionX * SPEED
-		else:
-			velocity.x = move_toward(velocity.x, 0, SPEED)
-			
-		var directionY = Input.get_axis(\"up\", \"down\")
-		if directionY:
-			velocity.y = directionY * SPEED
-		else:
-			velocity.y = move_toward(velocity.y, 0, SPEED)
-			
-	move_and_slide()
-
-
-func empujar(fuerza : Vector2) -> void:
-	velocidadEmpuje = fuerza
+@export var VELOCIDAD_MOVIMIENTO = 40.0
+@export var ACCELERACION_MOVIMIENTO = 10.0
+@export var FACTOR_AGACHADO = 6
 "
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_6odjy"]
-radius = 25.0
 
-[node name="PJ" type="CharacterBody2D"]
+[sub_resource type="Animation" id="Animation_6hwmu"]
+resource_name = "AGACHADO_IDLE"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("AnimatedSprite2D:animation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [&"crouch-Idle 48x48"]
+}
+
+[sub_resource type="Animation" id="Animation_5qawc"]
+resource_name = "AGACHADO_MOVER"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("AnimatedSprite2D:animation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [&"crouch-walk 48x48"]
+}
+
+[sub_resource type="Animation" id="Animation_f5fri"]
+resource_name = "CORRER"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("AnimatedSprite2D:animation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [&"run cycle 48x48"]
+}
+
+[sub_resource type="Animation" id="Animation_d8xp4"]
+resource_name = "IDLE"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("AnimatedSprite2D:animation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [&"idle 48x48"]
+}
+
+[sub_resource type="Animation" id="Animation_4gbno"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("AnimatedSprite2D:animation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [&"idle 48x48"]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_4ehx4"]
+_data = {
+&"AGACHADO_IDLE": SubResource("Animation_6hwmu"),
+&"AGACHADO_MOVER": SubResource("Animation_5qawc"),
+&"CORRER": SubResource("Animation_f5fri"),
+&"IDLE": SubResource("Animation_d8xp4"),
+&"RESET": SubResource("Animation_4gbno")
+}
+
+[sub_resource type="GDScript" id="GDScript_g1avn"]
+resource_name = "DE_PIE"
+script/source = "@tool
+
+extends Grupo
+
+func revisar_grupo() -> void:
+	if Input.is_action_pressed(\"agachar\"):
+		cambiarEstado.emit(LISTA_ESTADOS.AGACHADO)
+"
+
+[sub_resource type="GDScript" id="GDScript_dnv1s"]
+resource_name = "IDLE-DE-PIE"
+script/source = "extends State
+
+func entrar() -> void:
+	animaciones.play(LISTA_NOMBRE_ANIMACIONES.IDLE)
+	
+func revisar() -> void:
+	var direccion = Input.get_axis(\"left\", \"right\")
+	if direccion:
+		cambiarEstado.emit(LISTA_ESTADOS.CORRER)
+
+func ejecutar() -> void:
+	if abs(player.velocity.x) < player.ACCELERACION_MOVIMIENTO:
+		player.velocity.x = 0
+	
+	if abs(player.velocity.x) != 0:
+		if player.velocity.x > 0:
+			player.velocity.x += -player.ACCELERACION_MOVIMIENTO
+		else:
+			player.velocity.x += player.ACCELERACION_MOVIMIENTO
+ 
+func salir() -> void:
+	pass
+"
+
+[sub_resource type="GDScript" id="GDScript_43tq0"]
+resource_name = "CORRER-DE-PIE"
+script/source = "extends State
+
+func entrar() -> void:
+	animaciones.play(LISTA_NOMBRE_ANIMACIONES.CORRER)
+
+func revisar() -> void:
+	var direccion = Input.get_axis(\"left\", \"right\")
+	if not direccion:
+		cambiarEstado.emit(LISTA_ESTADOS.IDLE)
+
+func ejecutar() -> void:
+	var direccion = Input.get_axis(\"left\", \"right\")
+	
+	if direccion:
+		player.velocity.x += direccion * player.ACCELERACION_MOVIMIENTO 
+		if abs(player.velocity.x) > player.VELOCIDAD_MOVIMIENTO:
+			player.velocity.x = direccion * player.VELOCIDAD_MOVIMIENTO
+ 
+func salir() -> void:
+	pass
+"
+
+[sub_resource type="GDScript" id="GDScript_jpcsl"]
+resource_name = "AGACHADO"
+script/source = "@tool
+
+extends Grupo
+
+func entrar_grupo() -> void:
+	pass
+
+func revisar_grupo() -> void:
+	if not Input.is_action_pressed(\"agachar\"):
+		cambiarEstado.emit(LISTA_ESTADOS.DE_PIE)
+
+func ejecutar_grupo() -> void:
+	pass
+"
+
+[sub_resource type="GDScript" id="GDScript_o6150"]
+resource_name = "IDLE-AGACHADO"
+script/source = "extends State
+
+func entrar() -> void:
+	animaciones.play(LISTA_NOMBRE_ANIMACIONES.AGACHADO_IDLE)
+
+func revisar() -> void:
+	var direccion = Input.get_axis(\"left\", \"right\")
+	if direccion:
+		cambiarEstado.emit(LISTA_ESTADOS.CORRER)
+
+func ejecutar() -> void:
+	if abs(player.velocity.x) < player.ACCELERACION_MOVIMIENTO:
+		player.velocity.x = 0
+	
+	if abs(player.velocity.x) != 0:
+		if player.velocity.x > 0:
+			player.velocity.x += -player.ACCELERACION_MOVIMIENTO
+		else:
+			player.velocity.x += player.ACCELERACION_MOVIMIENTO
+ 
+func salir() -> void:
+	pass
+"
+
+[sub_resource type="GDScript" id="GDScript_50fl7"]
+resource_name = "CORRER-AGACHADO"
+script/source = "extends State
+
+func entrar() -> void:
+	animaciones.play(LISTA_NOMBRE_ANIMACIONES.AGACHADO_MOVER)
+
+func revisar() -> void:
+	var direccion = Input.get_axis(\"left\", \"right\")
+	if not direccion:
+		cambiarEstado.emit(LISTA_ESTADOS.IDLE)
+
+func ejecutar() -> void:
+	var direccion = Input.get_axis(\"left\", \"right\")
+	
+	if direccion:
+		player.velocity.x += direccion * player.ACCELERACION_MOVIMIENTO 
+		if abs(player.velocity.x) > player.VELOCIDAD_MOVIMIENTO / player.FACTOR_AGACHADO:
+			player.velocity.x = direccion * player.VELOCIDAD_MOVIMIENTO / player.FACTOR_AGACHADO
+ 
+func salir() -> void:
+	pass
+"
+
+[sub_resource type="GDScript" id="GDScript_8mwpu"]
+resource_name = "MIRAR-DER"
+script/source = "extends State
+
+@export var ani : AnimatedSprite2D
+
+func entrar() -> void:
+	ani.scale.x = 1
+
+func revisar() -> void:
+	var direccion : float = Input.get_axis(\"left\", \"right\")
+	if direccion < 0:
+		cambiarEstado.emit(LISTA_ESTADOS.IZQUIERDA)
+
+func ejecutar() -> void:
+	pass
+ 
+func salir() -> void:
+	pass
+"
+
+[sub_resource type="GDScript" id="GDScript_6hwmu"]
+resource_name = "MIRAR-IZQ"
+script/source = "extends State
+
+@export var ani : AnimatedSprite2D
+
+func entrar() -> void:
+	ani.scale.x = -1
+
+func revisar() -> void:
+	var direccion : float = Input.get_axis(\"left\", \"right\")
+	if direccion > 0:
+		cambiarEstado.emit(LISTA_ESTADOS.DERECHA)
+
+func ejecutar() -> void:
+	pass
+ 
+func salir() -> void:
+	pass
+"
+
+[node name="PJ" type="CharacterBody2D" unique_id=1556292312]
 collision_mask = 4
 script = SubResource("GDScript_7xq5x")
+VELOCIDAD_MOVIMIENTO = 300.0
+ACCELERACION_MOVIMIENTO = 60.0
+FACTOR_AGACHADO = 10
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("1_euvpk")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1609556391]
 shape = SubResource("CircleShape2D_6odjy")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=455505623]
+scale = Vector2(-1, 1)
+sprite_frames = ExtResource("1_g1avn")
+animation = &"idle 48x48"
+autoplay = "crouch-Idle 48x48"
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=232234329]
+libraries/ = SubResource("AnimationLibrary_4ehx4")
+
+[node name="FSM" type="Node" parent="." unique_id=905500903]
+script = ExtResource("2_dnv1s")
+metadata/_custom_type_script = "uid://bh47lvfqgose1"
+
+[node name="POSICIONES" type="Node" parent="FSM" unique_id=103167128 node_paths=PackedStringArray("current_state", "animaciones")]
+script = ExtResource("3_43tq0")
+current_state = NodePath("DE_PIE")
+LISTA_NOMBRE_ESTADOS = {
+&"AGACHADO": &"AGACHADO",
+&"DE_PIE": &"DE_PIE"
+}
+animaciones = NodePath("../../AnimationPlayer")
+LISTA_NOMBRE_ANIMACIONES = {
+"AGACHADO_IDLE": "AGACHADO_IDLE",
+"AGACHADO_MOVER": "AGACHADO_MOVER",
+"CORRER": "CORRER",
+"IDLE": "IDLE",
+"RESET": "RESET"
+}
+metadata/_custom_type_script = "uid://blggo3fjahvl3"
+
+[node name="DE_PIE" type="Node" parent="FSM/POSICIONES" unique_id=1742013260 node_paths=PackedStringArray("current_state")]
+script = SubResource("GDScript_g1avn")
+current_state = NodePath("IDLE")
+LISTA_NOMBRE_ESTADOS = {
+&"CORRER": &"CORRER",
+&"IDLE": &"IDLE"
+}
+"tamañoContenedor" = Vector2(260, 200)
+posicionVisor = Vector2(20, 120)
+metadata/_custom_type_script = "uid://cepbq3b02muvp"
+
+[node name="IDLE" type="Node" parent="FSM/POSICIONES/DE_PIE" unique_id=1788555283]
+script = SubResource("GDScript_dnv1s")
+posicionVisor = Vector2(6.080391, 7.9283676)
+metadata/_custom_type_script = "uid://d2ik4onhbjauk"
+
+[node name="CORRER" type="Node" parent="FSM/POSICIONES/DE_PIE" unique_id=839290919]
+script = SubResource("GDScript_43tq0")
+posicionVisor = Vector2(188.96268, 62.990677)
+metadata/_custom_type_script = "uid://d2ik4onhbjauk"
+
+[node name="AGACHADO" type="Node" parent="FSM/POSICIONES" unique_id=116115227 node_paths=PackedStringArray("current_state")]
+script = SubResource("GDScript_jpcsl")
+current_state = NodePath("IDLE")
+LISTA_NOMBRE_ESTADOS = {
+&"CORRER": &"CORRER",
+&"IDLE": &"IDLE"
+}
+"tamañoContenedor" = Vector2(320.00012, 120)
+posicionVisor = Vector2(280, 420)
+metadata/_custom_type_script = "uid://cepbq3b02muvp"
+
+[node name="IDLE" type="Node" parent="FSM/POSICIONES/AGACHADO" unique_id=1578863985]
+script = SubResource("GDScript_o6150")
+posicionVisor = Vector2(44.942, -12.4657135)
+metadata/_custom_type_script = "uid://d2ik4onhbjauk"
+
+[node name="CORRER" type="Node" parent="FSM/POSICIONES/AGACHADO" unique_id=855960659]
+script = SubResource("GDScript_50fl7")
+posicionVisor = Vector2(236.974, 13.860489)
+metadata/_custom_type_script = "uid://d2ik4onhbjauk"
+
+[node name="MIRAR" type="Node" parent="FSM" unique_id=55885774 node_paths=PackedStringArray("current_state")]
+script = ExtResource("3_43tq0")
+current_state = NodePath("DERECHA")
+LISTA_NOMBRE_ESTADOS = {
+&"DERECHA": &"DERECHA",
+&"IZQUIERDA": &"IZQUIERDA"
+}
+metadata/_custom_type_script = "uid://blggo3fjahvl3"
+
+[node name="DERECHA" type="Node" parent="FSM/MIRAR" unique_id=1714242931 node_paths=PackedStringArray("ani")]
+script = SubResource("GDScript_8mwpu")
+ani = NodePath("../../../AnimatedSprite2D")
+posicionVisor = Vector2(80, 220)
+metadata/_custom_type_script = "uid://d2ik4onhbjauk"
+
+[node name="IZQUIERDA" type="Node" parent="FSM/MIRAR" unique_id=588815617 node_paths=PackedStringArray("ani")]
+script = SubResource("GDScript_6hwmu")
+ani = NodePath("../../../AnimatedSprite2D")
+posicionVisor = Vector2(220, 120)
+metadata/_custom_type_script = "uid://d2ik4onhbjauk"
